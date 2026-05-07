@@ -1,2 +1,2 @@
 # Enternship
-A collaborative Enternship built with Vue.js for our VUE JS &amp; Version Control in Rwanda, focusing on version control best practices.
+A collaborative Enternship built with Vue.js for our project in L3 SWD, focusing on version control best practices.
