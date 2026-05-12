@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Last Spark - Jump Game</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #1a1a2e;
+            font-family: 'Arial', sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+
+        #app {
+            text-align: center;
+        }
+
+        .game-container {
+            width: 600px;
+            height: 200px;
+            border: 4px solid #444;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #1a1a2e, #16213e);
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* Pip - The Protagonist */
+        .player {
+            width: 40px;
+            height: 40px;
+            background: #e67e22;
+            box-shadow: 0 0 15px #e67e22;
+            border-radius: 4px;
+            position: absolute;
+            left: 50px;
+            transition: bottom 0.1s;
+        }
+
+    
+        .obstacle {
+            width: 30px;
+            height: 30px;
+            background: #e94560;
+            box-shadow: 0 0 10px #e94560;
+            position: absolute;
+            bottom: 0;
+        }
+
+        .score-board {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #f7dc6f;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            background: #e67e22;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background: #d35400;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div class="score-board">Score: {{ score }}</div>
+    
+    <div class="game-container">
+        <div v-if="gameOver" class="overlay">
+            <h1>GAME OVER</h1>
+            <p>Final Score: {{ score }}</p>
+            <button @click="resetGame">Restart Game</button>
+        </div>
+
+        <div class="player" :style="{ bottom: playerY + 'px' }"></div>
+
+        <div class="obstacle" :style="{ left: obstacleX + 'px' }"></div>
+    </div>
+    <p>Press <strong>SPACE</strong> to Jump</p>
+</div>
+
+<script>
+    const { createApp } = Vue;
+
+    createApp({
+        data() {
+            return {
+                score: 0,
+                gameOver: false,
+                playerY: 0,
+                isJumping: false,
+                obstacleX: 600,
+                speed: 6,
+                animationId: null
+            }
+        },
+        methods: {
+            gameLoop() {
+                if (this.gameOver) return;
+
+                // Move obstacle
+                this.obstacleX -= this.speed;
+
+                // Reset obstacle and increment score
+                if (this.obstacleX < -30) {
+                    this.obstacleX = 650;
+                    this.incrementScore();
+                }
+
+                this.checkCollision();
+                this.animationId = requestAnimationFrame(this.gameLoop);
+            },
+            jump() {
+                if (this.isJumping || this.gameOver) return;
+                
+                this.isJumping = true;
+                let height = 0;
+                
+                // Upward motion
+                const up = setInterval(() => {
+                    if (height >= 120) {
+                        clearInterval(up);
+                        // Downward motion
+                        const down = setInterval(() => {
+                            if (height <= 0) {
+                                clearInterval(down);
+                                this.isJumping = false;
+                            }
+                            height -= 6;
+                            this.playerY = height;
+                        }, 20);
+                    }
+                    height += 6;
+                    this.playerY = height;
+                }, 20);
+            },
+            checkCollision() {
+                // Collision Detection Logic
+                const playerLeft = 50;
+                const playerRight = 90;
+                const obstacleLeft = this.obstacleX;
+                const obstacleRight = this.obstacleX + 30;
+
+                if (
+                    obstacleLeft < playerRight && 
+                    obstacleRight > playerLeft && 
+                    this.playerY < 30
+                ) {
+                    this.gameOver = true;
+                    cancelAnimationFrame(this.animationId);
+                }
+            },
+            incrementScore() {
+                this.score++;
+                // Increase difficulty
+                if (this.score % 5 === 0) {
+                    this.speed += 0.5;
+                }
+            },
+            resetGame() {
+                this.score = 0;
+                this.gameOver = false;
+                this.obstacleX = 600;
+                this.speed = 6;
+                this.playerY = 0;
+                this.gameLoop();
+            }
+        },
+        mounted() {
+            window.addEventListener('keydown', (e) => {
+                if (e.code === 'Space') {
+                    this.jump();
+                }
+            });
+            this.gameLoop();
+        }
+    }).mount('#app');
+</script>
+
+</body>
+</html>
